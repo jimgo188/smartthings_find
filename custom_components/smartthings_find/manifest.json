@@ -5,6 +5,9 @@
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "config_flow": true,
+  "documentation": "https://github.com/jimgo188/smartthings_find",
+  "issue_tracker": "https://github.com/jimgo188/smartthings_find/issues",
+  "codeowners": ["@jimgo188"],
   "dependencies": [],
   "after_dependencies": ["http"],
   "requirements": []

@@ -1,0 +1,6 @@
+{
+  "name": "Samsung Find",
+  "description": "Samsung Find（查找我的手机）Home Assistant 自定义集成",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}
