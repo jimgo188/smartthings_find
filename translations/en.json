@@ -1,0 +1,116 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose how to sign in",
+        "description": "**Samsung Account (recommended)**: sign in once on Samsung's own page; Home Assistant renews the session by itself afterwards.\n\n**Cookie**: copy the `JSESSIONID` from a logged-in browser. Quick to set up, but it has to be replaced when it expires (measured: gone after ~18 h idle).",
+        "menu_options": {
+          "account": "Samsung Account (recommended, renews itself)",
+          "cookie": "Paste a cookie (expires)"
+        }
+      },
+      "account": {
+        "title": "Samsung Account sign-in",
+        "description": "**Step 1**: open the developer tools (`F12`) in a new tab -> **Network** -> tick **Preserve log**.\n\n**Step 2**: select the whole sign-in link in field **①** (`Ctrl+A`, `Ctrl+C`), paste it into that new tab and sign in on Samsung's page (password and second factor are only typed there).\n\n> The link is ~1800 characters long; do not copy it from the page text, that only gives the Home Assistant address.\n\n**Step 3**: when the sign-in ends the browser tries to open `ms-app://...` and fails - that is expected. Type `ms-app` in the Network filter, right-click the request -> **Copy -> Copy URL** (the red message in the Console contains the address too).\n\n**Step 4**: paste that whole `ms-app://...` address into field **②** and submit.\n\nThe link is valid for 15 minutes. Only the `userauth_token` is stored, never the password.",
+        "data": {
+          "signin_url": "① Sign-in link (click, Ctrl+A, Ctrl+C, open in a new tab)",
+          "callback_url": "② Paste the ms-app:// callback here",
+          "device_name": "③ Device name (shown in the Samsung Account device list)"
+        }
+      },
+      "cookie": {
+        "title": "Paste a cookie",
+        "description": "1. Log in at https://findmymobile.samsung.cn in a desktop browser.\n2. Press `F12` -> **Application** -> **Storage -> Cookies** -> `https://findmymobile.samsung.cn`.\n3. Copy the value of **`JSESSIONID`** (it is `HttpOnly`, so the Console cannot see it).\n4. Paste it below. A full `Cookie: ...` header works as well.\n\nThe Samsung password is never needed here.",
+        "data": {
+          "jsessionid": "JSESSIONID value (or a full Cookie header)"
+        }
+      },
+      "reauth": {
+        "title": "Reauthenticate with Samsung Find",
+        "description": "Samsung no longer accepts the stored authorization (changed password, signed out devices, revoked access...). Pick how to sign in again.",
+        "menu_options": {
+          "account": "Sign in with the Samsung Account (recommended)",
+          "cookie": "Paste a new cookie"
+        }
+      },
+      "reconfigure": {
+        "title": "Change the sign-in method",
+        "description": "Switch between Samsung Account and Cookie; existing devices and entities are kept.",
+        "menu_options": {
+          "account": "Use a Samsung Account",
+          "cookie": "Use a cookie"
+        }
+      }
+    },
+    "menu": {
+      "user": {
+        "menu_options": {
+          "account": "Samsung Account (recommended, renews itself)",
+          "cookie": "Paste a cookie (expires)"
+        }
+      },
+      "reauth": {
+        "menu_options": {
+          "account": "Sign in with the Samsung Account (recommended)",
+          "cookie": "Paste a new cookie"
+        }
+      },
+      "reconfigure": {
+        "menu_options": {
+          "account": "Use a Samsung Account",
+          "cookie": "Use a cookie"
+        }
+      }
+    },
+    "error": {
+      "invalid_cookie": "Invalid cookie: Samsung did not return `_csrf`.\n\n- make sure the browser is signed in to findmymobile.samsung.cn;\n- make sure you copied `JSESSIONID` and not another cookie;\n- the cookie may have expired - sign in again and copy a fresh one.",
+      "invalid_callback": "Field ② does not contain a Samsung sign-in callback.\n\n- an `http://…/config/integrations/…` address is Home Assistant itself, not the sign-in link;\n- the callback must start with `ms-app://`;\n- the sign-in link from field ① must not be pasted here.\n\nGo back to the browser and copy the `ms-app` request address (step 3).",
+      "login_expired": "The sign-in link expired (15 minutes). A new one has been created; please sign in again.",
+      "auth_failed": "Samsung rejected the authorization. Please sign in again.",
+      "cannot_connect": "Cannot reach Samsung. Check the network and try again."
+    },
+    "abort": {
+      "already_configured": "This Samsung account is already configured.",
+      "reauth_successful": "Reauthentication successful.",
+      "reconfigure_successful": "Sign-in method updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Samsung Find options",
+        "description": "**Passive**: only read the last position Samsung already has - no extra battery use; how fresh it is depends on the device's own reporting.\n\n**Active**: additionally ask the device to locate itself now (at most once per \"minimum auto-refresh interval\"). Fresher positions, but it wakes the device and uses more battery.\n\nBoth modes can be set separately for phones/tablets/watches/earbuds and for SmartTags.\n\n> To refresh once on demand use the device's *Refresh location* button instead of enabling active mode.\n> With cookie authentication you can also paste a new cookie here to replace the session.",
+        "data": {
+          "cookie": "New cookie (leave empty to keep the current session)",
+          "mode_others": "Mode for phones / tablets / watches / earbuds",
+          "mode_smarttags": "Mode for SmartTags",
+          "update_interval": "Update interval (seconds)",
+          "active_interval": "Minimum auto-refresh interval (seconds)",
+          "max_location_age": "Maximum position age (minutes, 0 = no limit)"
+        },
+        "data_description": {
+          "cookie": "Only needed when the current cookie expired; it is validated before it is stored.",
+          "mode_others": "Passive = read only; active = ask the device to locate once per update.",
+          "mode_smarttags": "Tags are located through nearby Galaxy devices, so active mode costs little.",
+          "update_interval": "How often Home Assistant reads from Samsung. Minimum 30 s.",
+          "active_interval": "Minimum time between two automatic location requests to the same device. Requests are only sent on updates, so the real interval is rounded up to the next update.",
+          "max_location_age": "After this the tracker stops reporting the old position (state unknown), so `person` falls back to its other trackers; 0 keeps showing the last position."
+        }
+      }
+    }
+  },
+  "selector": {
+    "mode": {
+      "options": {
+        "passive": "Passive: read Samsung's last position (almost no battery use)",
+        "active": "Active: make the device locate itself (fresher, more battery)"
+      }
+    }
+  },
+  "issues": {
+    "location_not_allowed": {
+      "title": "Samsung Find: a device is not allowed to report its position",
+      "description": "The device(s) {devices} have not accepted Samsung's location / personal data terms, so positions never update (requests are accepted but the device never answers).\n\nOpen https://findmymobile.samsung.cn, accept the dialog and reload the integration.\n\nThis notice disappears by itself once the consent is given."
+    }
+  }
+}

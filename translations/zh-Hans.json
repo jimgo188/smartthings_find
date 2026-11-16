@@ -1,0 +1,116 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "选择登录方式",
+        "description": "**三星账号登录（推荐）**：只用在三星自己的页面上登录一次，之后 Home Assistant 会自动续期，你基本不用再管。\n\n**粘贴 Cookie**：从已登录的浏览器里复制 `JSESSIONID`，设置简单，但过期后要手动更换（实测静置约 18 小时会失效）。",
+        "menu_options": {
+          "account": "三星账号登录（推荐，自动续期）",
+          "cookie": "粘贴 Cookie（简单，会过期）"
+        }
+      },
+      "account": {
+        "title": "三星账号登录（推荐）",
+        "description": "**第 1 步**：在新标签页按 `F12` → 切到 **Network（网络）** → 勾上 **Keep log / 保留日志**。\n\n**第 2 步**：把下面 **①** 框里的登录链接**全选复制**（点一下框 → `Ctrl+A` → `Ctrl+C`），粘到那个新标签页的地址栏打开，在**三星自己的页面**上登录（密码和二次验证都只输入在那里）。\n\n> 链接很长（约 1800 字符），不要从页面文字里右键复制，那样只会拿到 Home Assistant 自己的地址。\n\n**第 3 步**：登录完成后，浏览器会试图打开 `ms-app://…`（打不开、看着像没反应，这是正常的）。在 Network 过滤框输入 `ms-app`，右键那条请求 → **Copy → Copy URL**；也可以复制 Console 里那条红色报错里的地址。\n\n**第 4 步**：把整条 `ms-app://…` 地址粘到 **②** 框里提交。\n\n> 登录链接 15 分钟内有效；过期或贴错会提示，可以重新生成。`userauth_token` 会保存下来，密码不会被保存。",
+        "data": {
+          "signin_url": "① 登录链接（点一下 → Ctrl+A → Ctrl+C 复制，然后在新标签页打开）",
+          "callback_url": "② 登录完成后粘贴 ms-app:// 回调地址",
+          "device_name": "③ 设备名称（显示在三星账号「登录的设备」列表里）"
+        }
+      },
+      "cookie": {
+        "title": "粘贴 Cookie",
+        "description": "1. 在电脑浏览器登录 https://findmymobile.samsung.cn 。\n2. 按 `F12` → **Application（应用）** → **Storage → Cookies** → 选中 `https://findmymobile.samsung.cn`。\n3. 复制 **`JSESSIONID`** 的值（它是 `HttpOnly`，在 Console 里看不到）。\n4. 粘贴到下框。也接受整行 `Cookie: …` 请求头。\n\n不需要、也不应该把三星账号密码填到这里。",
+        "data": {
+          "jsessionid": "JSESSIONID 的值（或整行 Cookie 请求头）"
+        }
+      },
+      "reauth": {
+        "title": "重新登录三星 Find",
+        "description": "三星那边的授权失效了（例如你在三星账号里改了密码、退出了设备，或撤销了授权）。请选择重新登录的方式。",
+        "menu_options": {
+          "account": "三星账号重新登录（推荐）",
+          "cookie": "粘贴新的 Cookie"
+        }
+      },
+      "reconfigure": {
+        "title": "更改登录方式",
+        "description": "可以在「三星账号」和「Cookie」之间切换，已有的设备和实体不会丢失。",
+        "menu_options": {
+          "account": "改用三星账号登录",
+          "cookie": "改用 Cookie 登录"
+        }
+      }
+    },
+    "menu": {
+      "user": {
+        "menu_options": {
+          "account": "三星账号登录（推荐，自动续期）",
+          "cookie": "粘贴 Cookie（简单，会过期）"
+        }
+      },
+      "reauth": {
+        "menu_options": {
+          "account": "三星账号重新登录（推荐）",
+          "cookie": "粘贴新的 Cookie"
+        }
+      },
+      "reconfigure": {
+        "menu_options": {
+          "account": "改用三星账号登录",
+          "cookie": "改用 Cookie 登录"
+        }
+      }
+    },
+    "error": {
+      "invalid_cookie": "Cookie 无效：三星没有返回 `_csrf`。\n\n- 请确认浏览器已登录 findmymobile.samsung.cn；\n- 确认复制的是 `JSESSIONID`（不是其它 cookie）；\n- cookie 可能已经过期，重新登录后再复制一次。",
+      "invalid_callback": "② 里填的不是三星登录回调。\n\n- 如果填的是 `http://192.168…/config/integrations/…`，那是 Home Assistant 自己的地址，不是登录链接；\n- 回调地址必须以 `ms-app://` 开头；\n- 也不能把 ① 框里的登录链接填到 ②。\n\n请回到浏览器，按第 3 步复制那条 `ms-app` 请求的地址。",
+      "login_expired": "登录链接已过期（15 分钟）。下面已经生成了新链接，请重新登录一次。",
+      "auth_failed": "三星拒绝了这个授权，请重新登录。",
+      "cannot_connect": "无法连接三星服务，请检查网络后重试。"
+    },
+    "abort": {
+      "already_configured": "这个三星账号已经添加过了。",
+      "reauth_successful": "重新登录成功。",
+      "reconfigure_successful": "登录方式已更新。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "三星 Find 选项",
+        "description": "**被动模式**：只读取三星服务器上已有的最后位置，**不额外耗电**；位置新不新鲜取决于手机自己上报的节奏。\n\n**主动模式**：额外让设备**现在定位**（同一台设备至少间隔「自动刷新最小间隔」），位置更新更快，代价是会唤醒设备、**更耗电**。\n\n两种模式可以分别给「手机 / 平板 / 手表 / 耳机」和「SmartTag」设默认值。\n\n> 想随时刷新一次，用设备卡片上的「立即刷新位置」按钮即可，不用打开主动模式。\n> Cookie 登录时，这里还可以粘贴新的 Cookie 来更换会话。",
+        "data": {
+          "cookie": "新的 Cookie（留空则保持当前会话）",
+          "mode_others": "手机 / 平板 / 手表 / 耳机的模式",
+          "mode_smarttags": "SmartTag 的模式",
+          "update_interval": "刷新间隔（秒）",
+          "active_interval": "自动刷新最小间隔（秒）",
+          "max_location_age": "位置最大有效期（分钟，0 = 不限制）"
+        },
+        "data_description": {
+          "cookie": "只有当 Cookie 过期需要更换时才填，填完会自动验证；不填就保持现在的会话。",
+          "mode_others": "被动 = 只读三星已有位置；主动 = 每轮让设备定位一次。",
+          "mode_smarttags": "SmartTag 靠附近的 Galaxy 设备中继定位，主动模式耗电增加不明显。",
+          "update_interval": "每隔多久从三星读取一次数据，最小 30 秒。",
+          "active_interval": "同一台设备两次「自动请求定位」之间的最小间隔。因为只在刷新时发请求，实际间隔会向上取整到下一次刷新。",
+          "max_location_age": "超过这个时间的位置不再当作当前位置（实体变成未知），这样 person 会回退到其它定位设备；填 0 表示一直显示最后位置。"
+        }
+      }
+    }
+  },
+  "selector": {
+    "mode": {
+      "options": {
+        "passive": "被动：只读三星已有位置（几乎不耗电）",
+        "active": "主动：让设备现在定位（更快，更耗电）"
+      }
+    }
+  },
+  "issues": {
+    "location_not_allowed": {
+      "title": "三星 Find：有设备未允许上报位置",
+      "description": "设备 {devices} 没有同意三星的「位置 / 个人信息使用」条款，所以位置不会更新（请求会被受理，但设备不回传）。\n\n请打开 https://findmymobile.samsung.cn ，在弹出的条款窗口里勾选同意，然后重新加载该集成。\n\n同意后这个提示会自动消失。"
+    }
+  }
+}
